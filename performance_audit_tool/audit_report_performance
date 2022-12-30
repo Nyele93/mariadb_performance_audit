@@ -1,0 +1,447 @@
+#!/bin/bash
+
+usage(){ 
+          echo -e "\033[33m Usage: $(basename ${0}) [--prepare-local] | [--tags <tags_name>] | [--skip-tags <tag_name>] | [-a|--all].\033[0m"
+          echo -e "\033[33m [use $(basename ${0}) --help for more info]\033[0m" 1>&2; exit 1; 
+         }
+
+list_tags(){
+      #helper script to list all available tags for executing playbook at tag level.
+	ansible-playbook audit.yml -i local_hosts_file --list-tags 2>&1 |
+	grep "TASK TAGS" |
+	cut -d":" -f2 |
+	awk '{sub(/\[/, "")sub(/\]/, "")}1' |
+	sed -e 's/,//g' |
+	xargs -n 1 |
+	sort -u | 
+	nl -s  "..." -w3 -n rn 
+  }
+
+prepare_local(){
+ ## This script will prepare a local host file (to be used by the playbook)
+## from the hosts list in connect.config
+
+count=0
+declare error_text="\033[0;31m"
+declare success_text='\033[0;32m'
+declare info_text='\033[0;33m'
+declare clear_txtcolor='\033[0m'
+
+echo -e "${info_text}*Ensure connect.config file is in the right format...*${clear_txtcolor}"
+
+default_user=mariadbadmin
+read -ep "Enter rdba ssh user [$default_user]: " mdb_user
+rdba_user=${mdb_user-$default_user}
+
+#prepare local inventory file
+sed -i '1,3!d' performance_audit/files/local_hosts_file
+#get username from connect.config file
+default_connect_file=/usr/local/mariadb_rdba/etc/connect.config
+read -ep "enter file name in fullpath [$default_connect_file]: " conn_file
+connect_file=${conn_file-$default_connect_file}
+
+user=$(fgrep User $connect_file 2>/dev/null| grep -v "^#" | sed -e "s/Username//g" | tr -d " \t" | head -1)
+read_pwd=$(fgrep pass connect.config 2>/dev/null| grep -v "^#" | sed -e "s/password//g" | tr -d " \t" | head -1)
+
+
+#get and set hosts from connect.config
+IFS="
+"
+ for srv in $(fgrep -B1 Hostname $connect_file | grep -v "^#" | tr -d "\n" | sed -e "s/--/\n/g" | tr -s " " "\t")
+  do
+    	IFS=$(echo -e "\t") a=($srv)
+        name=${a[1]}
+        addr=${a[3]}
+        count=$((count+1))
+
+ if [[ -z $read_pwd ]]; then
+cat >> performance_audit/files/local_hosts_file <<-EOF
+$name ansible_ssh_host=$addr ansible_connection=ssh ansible_user=$rdba_user
+EOF
+else
+cat >> performance_audit/files/local_hosts_file <<-EOF
+$alias ansible_ssh_host=$addr ansible_connection=ssh ansible_user=$rdba_user ansible_password=$read_pwd
+EOF
+fi
+
+done
+   IFS="
+"
+
+  echo "populating local_host_file..."
+  echo -ne '##########          (30%)\r'
+  sleep 1
+  echo -ne '#######################         (60%)\r'
+  sleep 1
+  echo -ne '##########################################       (100%) [status: Complete] \r'
+  echo -ne '\n'
+echo "$count ansible hosts created from connect_config. written to performance_audit/files/local_hosts_file "
+
+}
+
+run_report(){
+declare -r intro_info="Starting automated Performance Audit(v1.0) $(date +'%d/%m/%Y %H:%M:%S')"
+declare -a details_arr
+declare -A full_details
+declare -i inst_nos
+declare -r custom_host_file="./performance_audit/files/custom_deployment_hosts"
+declare -r local_hosts_file="./performance_audit/files/local_hosts_file"
+declare -r custom_dns_file="custom_dns_file"
+declare -r inv_group_name="dbservers"
+declare -r server_details="./performance_audit/files/server_details"
+declare tags=$1
+declare skip_tags=$2
+
+#read config file for: customer_name, mariadb_user, mariadb_password
+. deploy.conf
+
+default_customer=$customer_name
+read -ep "Enter Customer Name [$default_customer]: " cust_name
+cust_name=${name-$default_customer}
+
+#set credentials in vars of role if first run
+#ToDO: implement cache
+ if [[ ! -z $mariadb_user && ! -z $mariadb_password ]]  
+  then 
+     sed -i "s/mariadb_usr/$mariadb_user/g" ./performance_audit/vars/main.yml
+     sed -i "s/mariadb_pwd/$mariadb_password/g" ./performance_audit/vars/main.yml
+ fi
+
+echo
+echo $intro_info
+echo "-----------------------------------------------------------"
+
+printTableformat(){
+    local -r delimiter="${1}"
+    local -r data="$(removeEmptyLines "${2}")"
+
+    if [[ "${delimiter}" != '' && "$(isEmptyString "${data}")" = 'false' ]]
+        then 
+            local -r numberOfLines="$(wc -l <<< "${data}")"
+            if [[ "${numberOfLines}" -gt '0' ]]
+            then
+                local table=''
+                local i=1
+
+                for ((i=1; i <= "${numberOfLines}"; i++))
+                do
+                  local line=''
+                  line="$(sed "${i}q;d" <<< "${data}")"
+
+                  local numberOfColumns='0'
+                  numberOfColumns="$(awk -F "${delimiter}" '{print NF}' <<< "${line}")"
+
+                  #Add Line Delimiter
+                  if [[ "${i}" -eq '1' ]]; then
+                      table="${table}$(printf '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
+                  fi
+                  #Add Header or Body
+                  table="${table}\n"
+                  local j=1
+                  for((j = 1; j <= "${numberOfColumns}"; j = j+1 ))
+                  do
+                     table="${table}$(printf '#| %s' "$(cut -d "${delimiter}" -f "${j}" <<< "${line}")")"
+                  done
+                  table="${table}#|\n"
+                  #Add line Delimiter
+                  if [[ "${i}" -eq '1' ]] || [[ "${numberOfLines}" -gt '1' && "${i}" -eq "${numberOfLines}" ]]
+                  then
+                      	table="${table}$(printf '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
+                  fi
+                done
+                if [[ "$(isEmptyString "${table}")" = 'false' ]]
+                then
+                    echo -e "${table}" | column -s '#' -t | awk '/^\+/{gsub(" ","-", $0)}1'
+                fi
+            fi
+    fi
+}
+
+function removeEmptyLines(){
+   local -r  content="${1}"
+
+   echo -e "${content}" | sed '/^\s*$/d'
+}
+
+function repeatString(){
+  local -r string="${1}"
+  local -r numberToRepeat="${2}"
+  
+  if [[ "${string}" != '' && "${numberToRepeat}" =~ ^[1-9][0-9]*$ ]]
+  then
+      local -r result="$(printf "%${numberToRepeat}s")"
+      echo -e "${result// /${string}}"
+  fi
+}
+
+function isEmptyString(){
+   local -r string="${1}"
+   if [[ "$(trimString "${string}")" = '' ]]
+   then
+       echo 'true' && return 0
+   fi
+
+   echo 'false' && return 1
+}
+
+function trimString(){
+  local -r string="${1}"
+  sed 's,^[[:blank:]]*,,' <<< "${string}" | sed 's,[[:blank:]]*$,,'
+}
+
+touch $server_details
+cat > $server_details <<-EOF
+S/N,ALIAS,HOST,SSH_USER,SSH_PASSWORD
+EOF
+#create custom host file deployment
+touch $custom_host_file
+cat > $custom_host_file <<-EOF
+[$inv_group_name]
+EOF
+
+#touch host_vars.yml
+#cat > host_vars.yml <<-EOF
+#---
+#EOF
+
+launch_ansible_dynamic(){
+  #ansible-playbook audit.yml -i $custom_host_file --tags=$specif
+    if [[ ! -z $tags  && $skip_tags == "false" ]] ; then
+                        ansible-playbook audit.yml -i $custom_host_file --tags=$tags
+
+                      elif  [[ $tags == "false" && ! -z $skip_tags ]]; then 
+                       ansible-playbook audit.yml -i $custom_host_file --skip-tags=$skip_tags
+                        elif  [[ $tags == "all" || $tags == "" ]]; then 
+                        ansible-playbook audit.yml -i $custom_host_file --tags=all
+                      else
+                       ansible-playbook audit.yml -i $custom_host_file --tags=all
+                    fi
+  #reset values in roles var file
+   sed -i "s/$mariadb_user/mariadb_usr/g" ./performance_audit/vars/main.yml
+   sed -i "s/$mariadb_password/mariadb_pwd/g" ./performance_audit/vars/main.yml
+   sed -i "/reportdir:*/c\reportdir: $report_base_dir" ./performance_audit/vars/main.yml
+}
+
+launch_anisble_local(){
+                      if [[ ! -z $tags  && $skip_tags == "false" ]] ; then
+			ansible-playbook audit.yml -i $local_hosts_file --tags=$tags
+		      elif  [[ $tags == "false" && ! -z $skip_tags ]]; then 
+                       ansible-playbook audit.yml -i $local_hosts_file --skip-tags=$skip_tags
+                        elif  [[ $tags == "all" || $tags == "" ]]; then 
+                        ansible-playbook audit.yml -i $local_hosts_file --tags=all
+                      else
+                       ansible-playbook audit.yml -i $local_hosts_file --tags=all
+                    fi
+   #reset values in roles var file
+   sed -i "s/$mariadb_user/mariadb_usr/g" ./performance_audit/vars/main.yml
+   sed -i "s/$mariadb_password/mariadb_pwd/g" ./performance_audit/vars/main.yml
+   sed -i "/reportdir:*/c\reportdir: $report_base_dir" ./performance_audit/vars/main.yml
+}
+
+begin_report_dynamic(){
+
+ declare -r report_directory=$report_base_dir/audit_report_${cust_name}_$(date +"%d-%m-%y")
+#create report directory using $cust_name $(date +'%d/%m/%Y)
+if [ ! -d $report_directory ]  
+then 
+    mkdir -p $report_directory
+   chmod -R 777 $report_directory
+fi
+#replace report_dir on roles `vars` with created directory
+sed -i "s|/tmp|$report_directory|g" ./performance_audit/vars/main.yml
+
+read -p "Enter Number of Nodes:" no_instances
+if [[ $no_instances -gt 0 ]]; then 
+   #echo $?
+   #call next program
+   for ((i=1; i<=$no_instances; i++))
+   do
+     	echo
+	echo "configure instance: $i"
+        #instance_details[alias]
+        read -p "alias($i): " alias
+        read -p "host($i):  " host
+        read -p "ssh_user:  " ssh_user
+
+while [[ -z $ssh_trust_set ]]
+   do
+    read -p "Use ssh_trust connection - assumes key is in place. [y/n]: "  ssh_trust_set
+    if [[ $ssh_trust_set = "y" || $ssh_trust_set = "yes" ]]; then 
+          hosts_array[$((i-1))]="$host"
+#line should execute only if using dynamic hosts
+cat >> $server_details <<-EOF
+$inst_no,$alias,$host,$ssh_user,"not set(using keys)"
+EOF
+
+#write custom host deployment
+cat >> $custom_host_file <<-EOF
+$alias ansible_ssh_host=$host ansible_connection=ssh ansible_user=$ssh_user
+EOF
+    elif [[ $ssh_trust_set = "n" || $ssh_trust_set = "no" ]]; then
+      unset ssh_password
+        unset charcount
+        unset inst_no
+        inst_no=$i
+        charcount=0
+        prompt="ssh_password: "
+        while IFS= read -s -r -n 1 -p "$prompt" ssh_pwd
+        do    
+	        #take and mask password with * characters
+                if [[ $ssh_pwd == $'\0' ]]
+                then
+                   break
+                fi
+             #handle Backspaces
+                if [[ $ssh_pwd == $'\177' ]]; then
+                    if [[ $charcount -gt 0 ]]; then
+                        charcount=$((charcount-1))
+                        prompt=$'\b \b'
+                        ssh_password="${ssh_password%?}"
+                    else
+                        prompt=''
+                    fi
+                else
+                    charcount=$((charcount+1))
+                    prompt='*'
+                    ssh_password+="$ssh_pwd"
+                fi
+        done 
+
+     hosts_array[$((i-1))]="$host"
+declare redacted_pwd=${ssh_password//[a-z0-9]/x}
+#line should execute only if using dynamic hosts
+cat >> $server_details <<-EOF
+$inst_no,$alias,$host,$ssh_user,$redacted_pwd
+EOF
+
+#write custom host deployment
+cat >> $custom_host_file <<-EOF
+$alias ansible_ssh_host=$host ansible_connection=ssh ansible_user=$ssh_user ansible_password=$ssh_password
+EOF
+  #***
+    fi
+  done
+
+  done
+echo
+
+   printTableformat ',' "$(cat $server_details)"
+   echo
+   while [[ -z $conf_pr ]]
+   do
+    read -p "Proceed with running reports on the above servers[Y/N]: "  conf_pr
+    if [[ $conf_pr = "y" || $conf_pr = "yes" ]]; then 
+      echo "starting Performance Audit report.."; launch_ansible_dynamic $report_directory
+    elif [[ $conf_pr = "n" || $conf_pr = "no" ]]; then
+    echo "Terminating Program... Bye..."
+    fi
+   done
+
+else
+  echo "[Error] : Please enter a number greater than 0"
+fi
+}
+
+begin_report_local(){
+
+ declare -r report_directory=$report_base_dir/audit_report_${cust_name}_$(date +"%d-%m-%y")
+#create report directory using $cust_name $(date +'%d/%m/%Y)
+if [ ! -d $report_directory ]  
+then 
+    mkdir -p $report_directory
+   chmod -R 777 $report_directory
+fi
+#replace report_dir on roles `vars` with created directory
+sed -i "s|/tmp|$report_directory|g" ./performance_audit/vars/main.yml
+
+launch_anisble_local $report_directory
+}
+
+echo "Choose Option to build target inventory"
+
+select task in  "dynamic" "local_inventory" "quit"
+do
+  	case $task in 
+                dynamic) echo "Selected Option: dynamic"; begin_report_dynamic;;
+                local_inventory) echo "Selected Option: read from inventory file"; begin_report_local;;
+                quit) break;;
+                *) echo "Invalid option. goodbye!!!";;
+        esac
+	break
+done
+
+}
+
+while test $# -gt 0; do
+  case "$1" in
+    -h|--help)
+      echo "$package - attempt to capture full details"
+      echo " "
+      echo "options:"
+      echo "-h, --help                show brief help"
+      echo "-t=ACTION, --tag=ACTION   specify specific task to execute in plabook, using the attached tag."
+      echo "-st, --show-tags          show all available tags in playbook."
+      echo "--prepare-local           This will prepare a local host file (to be used by the playbook) from the hosts list in connect.config"
+      echo "-a, --all                 execute all tasks in the playbook."
+      usage
+      exit 0
+      ;;
+     -t| --tags)
+         if [ "$2" ]; then
+            tags=$2
+             run_report $tags false
+             exit 0
+              shift
+              else
+                   echo 'ERROR: "-t | --tags" requires a non-empty option argument.'
+                  exit 1
+              fi
+               shift
+              ;;
+
+     --skip-tags)
+         if [ "$2" ]; then
+            skip_tags=$2
+             run_report false $skip_tags
+             exit 0
+              shift
+              else
+                   echo 'ERROR: "--skip-tags" requires a non-empty option argument.'
+                  exit 1
+              fi
+               shift
+              ;;
+    --prepare-local)
+        prepare_local
+        exit 0
+        shift
+        ;;
+
+    -a| --all)
+      run_report all
+      exit 0
+      shift
+      ;;
+
+    -st| --show-tags)
+      echo "playbook can be executed for any of the tags attached to a task."
+      echo "to run the entire tasks in the playbook, use the option: --tags all or --all, else replace all with any of the below tags to run specific report."
+      list_tags
+      exit 0
+      shift
+      ;;
+    *)
+      echo -e "\033[33m Invalid option entered. run --help to see more info on usage\033[0m"
+      exit 1
+      break
+      ;;
+  esac
+done
+
+if [ $# -eq 0 ]; then
+   echo -e "\033[33m <params> cannot be empty. run --help to see more info on usage\033[0m"
+   usage
+fi
+exit 0
+
+
