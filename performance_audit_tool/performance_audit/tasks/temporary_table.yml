@@ -3,22 +3,22 @@
   tags: innodb_buffer_pool
   block:
   - name: check innodb_buffer_pool size
-    command: "mysql -BNe 'select CONVERT(@@innodb_buffer_pool_size /1024/1024, INTEGER);'"
-    register: innodb_buffer_pool_size
+    command: "mysql -ABNe 'select concat(round(((select variable_value from information_schema.global_status where variable_name=\"Created_tmp_disk_tables\")/(select variable_value from information_schema.global_status where variable_name=\"Created_tmp_tables\")),2),\'%\');'"
+    register: temp_table_efiiciency
 
   - name: create report file and write header
-    shell: echo "* Check InnoDB buffer pool size" >> {{ reportdir }}/bufferpool_check
+    shell: echo "* Check Temporary Table Efficiency" >> {{ reportdir }}/temp_table_check
     register: file_written
     delegate_to: 127.0.0.1
     run_once: true
     when: inventory_hostname == ansible_play_hosts_all[0]
 
   - name: write report to file
-    shell: echo "InnoDB buffer pool size for {{ ansible_hostname }} - {{ innodb_buffer_pool_size.stdout }} MB" >> {{ reportdir }}/bufferpool_check
+    shell: echo "Temporary Table efficiency for {{ ansible_hostname }} - {{ temp_table_efiiciency.stdout }}" >> {{ reportdir }}/temp_table_check
     register: file_written
     delegate_to: 127.0.0.1
-    when: innodb_buffer_pool_size
+    when: temp_table_efficiency
 
   - name: echo report directory
-    debug: msg="report written to file - {{ reportdir }}/bufferpool_check"
+    debug: msg="report written to file - {{ reportdir }}/temp_table_check"
 

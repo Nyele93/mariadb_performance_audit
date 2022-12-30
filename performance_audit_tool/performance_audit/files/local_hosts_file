@@ -1,3 +1,15 @@
 #do not delete. 
 # 
 [dbservers]
+nfiv-mdb-01p ansible_ssh_host=nfiv-mdb-01p ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-02p ansible_ssh_host=nfiv-mdb-02p ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-03p ansible_ssh_host=nfiv-mdb-03p ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-04p ansible_ssh_host=nfiv-mdb-04p ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-05p ansible_ssh_host=nfiv-mdb-05p ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-06p ansible_ssh_host=nfiv-mdb-06p ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-01d ansible_ssh_host=nfiv-mdb-01d ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-02d ansible_ssh_host=nfiv-mdb-02d ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-03d ansible_ssh_host=nfiv-mdb-03d ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-04d ansible_ssh_host=nfiv-mdb-04d ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-05d ansible_ssh_host=nfiv-mdb-05d ansible_connection=ssh ansible_user=mariadb
+nfiv-mdb-06d ansible_ssh_host=nfiv-mdb-06d ansible_connection=ssh ansible_user=mariadb
