@@ -1,6 +1,6 @@
 ---
 - name: check DB Tables metrics
-  tags: database_table_metrics
+  tags: check_database_table_metrics
   block:
   - name: Check table open size
     command: "mysql -BNe 'select @@table_open_cache;'"
@@ -18,17 +18,13 @@
   - name: check open table definitions
     command: "mysql -BNe 'select variable_value from information_schema.global_status where variable_name = \"Opened_table_definitions\";'"
     register: open_table_definitions
-
-  - name: check max tmp table size
-    command: "mysql -BNe 'select convert(@@tmp_table_size /1024 /1024, INTEGER);'"
-    register: max_tmp_table_size
     
   - name: check max memory table size
     command: "mysql -BNe 'select convert(@@max_heap_table_size /1024 /1024, INTEGER)';"
     register: max_memory_table_size
 
   - name: check possibly fragmented Tables
-    command: "mysql -ABNe 'SELECT concat(TABLE_SCHEMA, \'.\', TABLE_NAME) FROM information_schema.tables WHERE table_schema NOT IN (\'mariadb\', \'information_schema\', \'performance_schema\', \'sys\') AND  DATA_FREE > 0 AND ENGINE = \'InnoDB\' AND round((data_free/(index_length+data_length)),2) > 10;'"
+    command: "mysql -ABNe 'SELECT concat(TABLE_SCHEMA,\".\", TABLE_NAME) FROM information_schema.tables WHERE table_schema NOT IN (\"mariadb\", \"information_schema\", \"performance_schema\", \"sys\") AND  DATA_FREE > 0 AND ENGINE = \"InnoDB\" AND round((data_free/(index_length+data_length)),2) > 10;'"
     register: Fragmented_Tables
 
   - name: create report file and write header
@@ -73,23 +69,13 @@
     delegate_to: 127.0.0.1
   
   - name: create report file and write header
-    shell: echo "* Check max tmp table size" >> {{ reportdir }}/table_metrics_check
-    delegate_to: 127.0.0.1
-    run_once: true
-    when: inventory_hostname == ansible_play_hosts_all[0]
-
-  - name: write report to file
-    shell: echo "Max tmp table size for for {{ ansible_hostname }} - {{ max_tmp_table_size.stdout }} MB" >> {{ reportdir }}/table_metrics_check
-    delegate_to: 127.0.0.1
-  
-  - name: create report file and write header
     shell: echo "* Check max memory table size" >> {{ reportdir }}/table_metrics_check
     delegate_to: 127.0.0.1
     run_once: true
     when: inventory_hostname == ansible_play_hosts_all[0]
 
   - name: write report to file
-    shell: echo "Max memory table size for {{ ansible_hostname }} - {{ max_memory_table_size.stdout }} iops" >> {{ reportdir }}/table_metrics_check
+    shell: echo "Max memory table size for {{ ansible_hostname }} - {{ max_memory_table_size.stdout }} MB" >> {{ reportdir }}/table_metrics_check
     delegate_to: 127.0.0.1
 
   - name: create report file and write header
@@ -100,7 +86,7 @@
 
   - name: write report to file
     shell: echo "Number of possibly Fragmented Tables in {{ ansible_hostname }} - {{ Fragmented_Tables.stdout.split('\n') | length }} " >> {{ reportdir }}/table_metrics_check
-    shell: echo "Fragmented Tables in {{ ansible_hostname }} - {{ Fragmented_Tables.stdout_lines }} " >> {{ reportdir }}/table_metrics_check
+    shell: echo "Possibly Fragmented Tables in {{ ansible_hostname }} - {{ Fragmented_Tables.stdout_lines }} " >> {{ reportdir }}/table_metrics_check
     delegate_to: 127.0.0.1
 
   - name: echo report directory

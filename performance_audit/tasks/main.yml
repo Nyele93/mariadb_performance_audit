@@ -6,6 +6,8 @@
 - include: log_metrics.yml
 - include: threads_metrics.yml
 - include: table_metrics.yml
+- include: temporary_table.yml
+- include: index_metrics.yml
 - include: querycache_metrics.yml
 - include: connections_metrics.yml
 - include: os_metrics.yml

@@ -1,6 +1,6 @@
 ---
 - name: check innodb_buffer_pool size
-  tags: innodb_buffer_pool
+  tags: check_innodb_buffer_pool
   block:
   - name: check innodb_buffer_pool size
     command: "mysql -BNe 'select CONVERT(@@innodb_buffer_pool_size /1024/1024, INTEGER);'"

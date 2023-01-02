@@ -1,0 +1,37 @@
+---
+- name: check temporary table metrics
+  tags: check_temporary_table_metrics
+  block:
+  - name: check max tmp table size
+    command: "mysql -BNe 'select convert(@@tmp_table_size /1024 /1024, INTEGER);'"
+    register: max_tmp_table_size
+
+  - name: check Temporary Table Efficiency
+    command: "mysql -ABNe 'select concat(round(((select variable_value from information_schema.global_status where variable_name=\"Created_tmp_disk_tables\")/(select variable_value from information_schema.global_status where variable_name=\"Created_tmp_tables\")),2)*100,\"%\");'"
+    register: temp_table_efiiciency
+
+  - name: create report file and write header
+    shell: echo "* Check max tmp table size" >> {{ reportdir }}/temp_table_check
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "Max tmp table size for {{ ansible_hostname }} - {{ max_tmp_table_size.stdout }} MB" >> {{ reportdir }}/temp_table_check
+    delegate_to: 127.0.0.1
+
+  - name: create report file and write header
+    shell: echo "* Check Temporary Table Efficiency" >> {{ reportdir }}/temp_table_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "Temporary Table efficiency for {{ ansible_hostname }} - {{ temp_table_efiiciency.stdout }}" >> {{ reportdir }}/temp_table_check
+    register: file_written
+    delegate_to: 127.0.0.1
+
+  - name: echo report directory
+    debug: msg="report written to file - {{ reportdir }}/temp_table_check"
+

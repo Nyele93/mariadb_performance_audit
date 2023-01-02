@@ -1,6 +1,6 @@
 ---
 - name: check db logs metrics
-  tags: db_logs_metrics
+  tags: check_db_logs_metrics
   block:
   - name: Check InnoDB log file size
     command: "mysql -BNe 'select CONVERT(@@innodb_log_file_size /1024/1024, INTEGER);'"
