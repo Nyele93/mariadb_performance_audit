@@ -17,6 +17,21 @@ list_tags(){
 	nl -s  "..." -w3 -n rn 
   }
 
+list_hosts(){
+      #helper script to list all available tags for executing playbook at tag level.
+     ansible-inventory -i ./performance_audit/files/local_hosts_file --graph dbservers 2>&1 | 
+     cut -d":" -f2 | 
+     awk '{sub(/\[/, "")sub(/\]/, "")}1' | 
+     sed '/^[[:space:]]*$/d' | 
+     xargs -n 1 | 
+     sort -u | 
+     nl -s "" -w3 -n rn
+  }
+
+initialize(){
+  echo "todo"
+}
+
 prepare_local(){
  ## This script will prepare a local host file (to be used by the playbook)
 ## from the hosts list in connect.config
@@ -91,6 +106,7 @@ declare -r inv_group_name="dbservers"
 declare -r server_details="./performance_audit/files/server_details"
 declare tags=$1
 declare skip_tags=$2
+declare hosts=$3
 
 #read config file for: customer_name, mariadb_user, mariadb_password
 . deploy.conf
@@ -206,13 +222,13 @@ EOF
 
 launch_ansible_dynamic(){
   #ansible-playbook audit.yml -i $custom_host_file --tags=$specif
-    if [[ ! -z $tags  && $skip_tags == "false" ]] ; then
-                        ansible-playbook audit.yml -i $custom_host_file --tags=$tags
+    if [[ ! -z $tags  && $skip_tags == "false" && ! -z $hosts ]] ; then
+                        ansible-playbook audit.yml -i $custom_host_file --tags=$tags --limit=$hosts
 
-                      elif  [[ $tags == "false" && ! -z $skip_tags ]]; then 
-                       ansible-playbook audit.yml -i $custom_host_file --skip-tags=$skip_tags
-                        elif  [[ $tags == "all" || $tags == "" ]]; then 
-                        ansible-playbook audit.yml -i $custom_host_file --tags=all
+                      elif  [[ $tags == "false" && ! -z $skip_tags && ! -z $hosts ]]; then 
+                       ansible-playbook audit.yml -i $custom_host_file --skip-tags=$skip_tags --limit=$hosts
+                        elif  [[ $tags == "all" || $tags == "" || $host == "all" ]]; then 
+                        ansible-playbook audit.yml -i $custom_host_file --tags=all --limit=dbservers
                       else
                        ansible-playbook audit.yml -i $custom_host_file --tags=all
                     fi
@@ -399,6 +415,19 @@ while test $# -gt 0; do
                shift
               ;;
 
+     -h| --hosts)
+         if [ "$3" ]; then
+            hosts=$3
+             run_report $hosts false
+             exit 0
+              shift
+              else
+                   echo 'ERROR: "-h | --hosts" requires a non-empty option argument.'
+                  exit 1
+              fi
+               shift
+              ;;
+
      --skip-tags)
          if [ "$2" ]; then
             skip_tags=$2
@@ -430,6 +459,15 @@ while test $# -gt 0; do
       exit 0
       shift
       ;;
+
+    -sh| --show-hosts)
+      echo "playbook can be executed for any or all of the target hosts captured in the inventory file."
+      echo "to run the playbook for a particular host, use the option: --hosts <hostname>. the default behaviour (with no value for this flah) is to run for all hosts."
+      list_hosts
+      exit 0
+      shift
+      ;;
+
     *)
       echo -e "\033[33m Invalid option entered. run --help to see more info on usage\033[0m"
       exit 1
