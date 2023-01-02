@@ -91,22 +91,19 @@
 
   - name: write HTML file
     template:
-      src: ../files/templates/sample_task_template.j2
+      src: sample_task_template.j2
       dest: table.html
       mode: 0777
     delegate_to: 127.0.0.1
 
-  - set_fact:
-      tmpl_src: "{{ lookup('template', '../files/templates/sample_task_template.j2') }}"
-
-  - name: Insert / update match user configuration
-    blockinfile:
-      path: /usr/local/mariadb_rdba/etc/mariadb_performance_audit/def.html
+  - blockinfile:
+      marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item }}"
+      path: /usr/local/mariadb_rdba/etc/mariadb_performance_audit/def2.html
       create: true
-      marker: ""
-      block: |
-        Match User ansible-agent
-        PasswordAuthentication no
+      block: "{{ lookup('template', item) }}"
+    loop:
+        - sample_task_template.j2
+    delegate_to: 127.0.0.1
 
   - name: echo report directory
     debug: msg="report written to file - {{ reportdir }}/table_metrics_check"

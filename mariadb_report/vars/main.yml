@@ -1,0 +1,7 @@
+---
+# vars file for mariadb_report
+
+reportdir: /tmp
+mariadb_user: mariadb_usr
+mariadb_pwd: mariadb_pwd
+

@@ -1,0 +1,12 @@
+---
+- name: Ansislble playbook to test the block in file module.
+  hosts: localhost
+  tasks:
+  - name: Insert / update match user configuration
+    blockinfile:
+      path: /usr/local/mariadb_rdba/etc/mariadb_performance_audit/abc.html
+      create: true
+      block: |
+        Match User ansible-agent
+        PasswordAuthentication no
+

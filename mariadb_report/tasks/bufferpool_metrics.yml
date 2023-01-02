@@ -1,0 +1,109 @@
+---
+- name: check innodb_buffer_pool size
+  tags: check_innodb_buffer_pool
+  block:
+  - name: check innodb_buffer_pool size
+    command: "mysql -BNe 'select CONVERT(@@innodb_buffer_pool_size /1024/1024, INTEGER);'"
+    register: innodb_buffer_pool_size
+
+  - name: check innodb_buffer_pool Hit Rate
+    command: "mysql -ABNe 'select round((((select variable_value from information_schema.global_status where variable_name = \"Innodb_buffer_pool_read_requests\") / ((select variable_value from information_schema.global_status where variable_name=\"Innodb_buffer_pool_read_requests\") + (select variable_value from information_schema.global_status where variable_name=\"Innodb_buffer_pool_reads\"))) * 100),2);'"
+    register: innodb_buffer_pool_hit_rate
+
+  - name: check Innodb_Buffer_Pool Current Usage Percentage
+    command: "mysql -ABNe 'select round((((select variable_value from information_schema.global_status where variable_name=\"innodb_buffer_pool_pages_total\") - (select variable_value from information_schema.global_status where variable_name=\"innodb_buffer_pool_pages_free\"))*100)/(select variable_value from information_schema.global_status where variable_name=\"innodb_buffer_pool_pages_total\"),4);'"
+    register: innodb_buffer_pool_current_usage_percentage
+
+  - name: check Innodb_Buffer_Pool Load Status
+    command: "mysql -ABNe 'select variable_value from information_schema.global_status where variable_name=\"Innodb_buffer_pool_load_status\";'"
+    register: innodb_buffer_pool_load_status
+
+  - name: check Innodb_Buffer_Pool Dump on shutdown
+    command: "mysql -ABNe 'select @@innodb_buffer_pool_dump_at_shutdown;'"
+    register: innodb_buffer_pool_dump_at_shutdown
+
+  - name: check Innodb_Buffer_Pool Load at Startup
+    command: "mysql -ABNe 'select @@innodb_buffer_pool_load_at_startup;'"
+    register: innodb_buffer_pool_load_at_startup
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB buffer pool size" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB buffer pool size for {{ ansible_hostname }} - {{ innodb_buffer_pool_size.stdout }} MB" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    when: innodb_buffer_pool_size
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB buffer pool Hit Rate" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB buffer pool Hit Rate for {{ ansible_hostname }} - {{ innodb_buffer_pool_hit_rate.stdout }} %" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    when: innodb_buffer_pool_size
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB buffer Current Usage Percentage" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB buffer pool current Usage Percentage {{ ansible_hostname }} - {{ innodb_buffer_pool_current_usage_percentage.stdout }} %" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    when: innodb_buffer_pool_size
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB buffer pool Load Status" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB buffer pool Load Status for {{ ansible_hostname }} - {{ innodb_buffer_pool_load_status.stdout }} " >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    when: innodb_buffer_pool_size
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB buffer pool dump_at_shutdown" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB buffer pool dump_at_shutdown for {{ ansible_hostname }} - {{ innodb_buffer_pool_dump_at_shutdown.stdout }} " >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    when: innodb_buffer_pool_size
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB buffer pool load_at_startup" >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB buffer pool load_at_startup for {{ ansible_hostname }} - {{ innodb_buffer_pool_load_at_startup.stdout }} " >> {{ reportdir }}/bufferpool_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    when: innodb_buffer_pool_size
+
+  - name: echo report directory
+    debug: msg="report written to file - {{ reportdir }}/bufferpool_check"
+

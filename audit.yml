@@ -6,5 +6,5 @@
   become_user: root
   strategy: linear
   roles:
-    - performance_audit
+    - mariadb_report
 
