@@ -1,6 +1,0 @@
----
-# vars file for performance_audit
-reportdir: /tmp
-mariadb_user: mariadb_usr
-mariadb_pwd: mariadb_pwd
-

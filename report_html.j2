@@ -1,0 +1,22 @@
+
+
+<h2 style="color:powderblue; font-family:verdana; font-size: 20px;">Executive Summary</h2>
+<p style="font-family:Arial; color:Blue; font-size: 20px;">
+As part of your Platinum Subscription, this performance check report contains general recommendations and evaluations of the existing servers listed below. All recommendations provided in this report are based on our general experience. We advise you to test our recommendations before using them in your production systems. Remember to perform a full backup before implementing any changes to your systems.
+</p>
+
+
+<table style="border: 1px solid black; border-collapse: collapse;">
+<tr>
+    {% for header in headers.split(",") %}
+    <th style="border: 1px solid black; padding: 8px 16px;">{{ header }}</th>
+    {% endfor %}
+</tr>
+{% for host in csv_file.list %}
+<tr>
+    {% for header in headers.split(",") %}
+    <td style="border: 1px solid black; padding: 8px 16px;">{{ host[header] }}</td>
+    {% endfor %}
+</tr>
+{% endfor %}
+</table>

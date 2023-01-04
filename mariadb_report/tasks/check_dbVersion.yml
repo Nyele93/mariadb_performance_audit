@@ -28,22 +28,36 @@
     delegate_to: 127.0.0.1
     when: mariadb_version | length > 0
 
-  - name: write HTML file
-    template:
-      src: ../files/templates/sample_task_template.j2
-      dest: sample_template.html
-      mode: 0777
-    delegate_to: 127.0.0.1  
-
-  - set_fact:
-      tmpl_src: "{{ lookup('template', '../files/templates/sample_task_template.j2') }}"
-
-  - name: write to HTML2 file
-    blockinfile:
-      dest: ../../sample.html
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ version_csv_filename }}"
+      line: "{{ mariadb_version_headers }}"
       create: true
       state: present
-      content: '{{ tmpl_src }}'
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ version_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ mariadb_version.stdout }},Upgrade to the latest MariaDB Enterprise Server for the series"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ version_csv_filename }}"
+    register: version_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: mariadb_version.j2
+      dest: mariadb_version_check.html
+      mode: 0777
+    delegate_to: 127.0.0.1  
     
   - name: echo report directory
     debug: msg="report written to file - {{ reportdir }}/dbVersion_check"

@@ -5,3 +5,15 @@ reportdir: /tmp
 mariadb_user: mariadb_usr
 mariadb_pwd: mariadb_pwd
 
+csv_path: /tmp/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23
+version_csv_filename: dbversion.csv
+mariadb_version_headers: Server Name,Version,Recommendation
+bufferpool_headers: Server,Innodb_buffer_pool_size,Innodb_log_file_size,Innodb_log_files_in_group
+additional_innodb_headers: Server,Innodb_flush_method,innodb_io_capacity,Recommendation
+connections_header: Server,max_connections,max_used_connections
+thread_cache_headers: Server,thread_cache_size,threads_created,Recommendation
+table_cache_headers: Server,Table_open_cache,Open_tables,opened_tables,Hit Rate
+table_definitions_cache_header: Server,table_definition_cache,Opened_table_definitions,Recommendation
+Query_Cache_header: Server,query_cache_type,query_cache_size,Query cache Efficiency,Recommendation
+Temporary_table_header: Server,tmp_table_size,max_heap_table_size,Recommendation
+
