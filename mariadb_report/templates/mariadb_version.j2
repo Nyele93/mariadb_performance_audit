@@ -1,5 +1,5 @@
 
-<h4 style="color:#72A0C1; font-family:verdana; font-size: 15px;">MariaDB Version</h4>
+<h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">MariaDB Version</h4>
 <p style="font-family:Arial; font-size: 13px;">
 Newer releases contain bug fixes and security patches. It is important to keep up to date.
 </p>
@@ -7,16 +7,21 @@ Newer releases contain bug fixes and security patches. It is important to keep u
 However, Please do consult with the RDBA team, for potential minor or major version upgrades.
 </p>
 
-<table style="border: 1px solid black; border-collapse: collapse;">
+<style> .report-table th { background-color: #C0C0C0; color: #000066 }
+ .example-table td:nth-child(1) { color: #000066; font-weight: bold; }
+.example-table td:not(:first-child) { color: #0066FF; }
+</style>
+
+<table class="report-table" style="border: 1px solid black; border-collapse: collapse;">
 <tr>
     {% for header in mariadb_version_headers.split(",") %}
-    <th style="border: 1px solid black; padding: 8px 16px;">{{ header }}</th>
+    <th style="border: 1px solid black; padding: 8px 16px; font-family:Arial; font-size: 13px;">{{ header }}</th>
     {% endfor %}
 </tr>
 {% for host in version_csv_file.list %}
 <tr>
     {% for header in mariadb_version_headers.split(",") %}
-    <td style="border: 1px solid black; padding: 8px 16px;">{{ host[header] }}</td>
+    <td style="border: 1px solid black; padding: 8px 16px; font-family:Arial; font-size: 13px;">{{ host[header] }}</td>
     {% endfor %}
 </tr>
 {% endfor %}
@@ -25,4 +30,4 @@ However, Please do consult with the RDBA team, for potential minor or major vers
 <p style="font-family:Arial; font-size: 13px;">
 Check the MariaDB Enterprise Server latest Release Notes:
 </p>
-<a href="https://mariadb.com/docs/server/release-notes/">https://mariadb.com/docs/server/release-notes/</a>
+<a style="text-decoration:none; color: #0066FF;" ref="https://mariadb.com/docs/server/release-notes/">https://mariadb.com/docs/server/release-notes/</a>

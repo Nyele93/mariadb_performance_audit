@@ -1,0 +1,29 @@
+
+<h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">Connections Checks</h4>
+<p style="font-family:Arial; font-size: 13px;">
+The max_used_connections should ideally be lower than the max_connections value, as having it greater than the set value for max_connections could result in the mariadb server hitting the: “Too Many Connections” error.
+</p>
+<p style="font-family:Arial; font-size: 13px;">
+Innodb_stats_on_metadata should ideally be set to OFF. If set to ON, Innodb index statistics are unnecessarily updated when running some queries like SHOW TABLE STATUS, etc, and querying Information_Schema table like TABLES, STATISTICS, etc. This causes unnecessary IO loads to the system.
+</p>
+
+<style> .report-table th { background-color: #C0C0C0; color: #000066 }
+ .example-table td:nth-child(1) { color: #000066; font-weight: bold; }
+.example-table td:not(:first-child) { color: #0066FF; }
+</style>
+
+<table class="report-table" style="border: 1px solid black; border-collapse: collapse;">
+<tr>
+    {% for header in connections_header.split(",") %}
+    <th style="border: 1px solid black; padding: 8px 16px; font-family:Arial; font-size: 13px;">{{ header }}</th>
+    {% endfor %}
+</tr>
+{% for host in connections_csv_file.list %}
+<tr>
+    {% for header in connections_header.split(",") %}
+    <td style="border: 1px solid black; padding: 8px 16px; font-family:Arial; font-size: 13px;">{{ host[header] }}</td>
+    {% endfor %}
+</tr>
+{% endfor %}
+</table>
+

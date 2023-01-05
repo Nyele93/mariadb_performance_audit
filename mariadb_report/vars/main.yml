@@ -5,13 +5,17 @@ reportdir: /tmp
 mariadb_user: mariadb_usr
 mariadb_pwd: mariadb_pwd
 
-csv_path: /tmp/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23
+csv_path: /tmp/audit_report_NFI_05-01-23/audit_report_NFI_05-01-23/audit_report_NFI_05-01-23/audit_report_NFI_05-01-23/audit_report_NFI_04-01-23/audit_report_NFI_04-01-23/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23
 version_csv_filename: dbversion.csv
 mariadb_version_headers: Server Name,Version,Recommendation
-bufferpool_headers: Server,Innodb_buffer_pool_size,Innodb_log_file_size,Innodb_log_files_in_group
-additional_innodb_headers: Server,Innodb_flush_method,innodb_io_capacity,Recommendation
-connections_header: Server,max_connections,max_used_connections
-thread_cache_headers: Server,thread_cache_size,threads_created,Recommendation
+bufferpool_headers: Server,Innodb_buffer_pool_size,Innodb_Buffer_Pool Hit Rate,Innodb Current Usage,Innodb Load Status
+bufferpool_csv_filename: bufferpool.csv
+additional_innodb_headers: Server,Innodb_log_file_size,Innodb_log_files_in_group,Innodb_flush_method,innodb_io_capacity
+additional_bp_csv_filename: additional_bp.csv
+connections_header: Server,max_connections,max_used_connections,Innodb_Stats_on_metadata
+connections_csv_filename: connections.csv
+thread_cache_headers: Server,thread_cache_size,threads_created,Thread_cache_hit_rate,Thread_cache_miss_rate
+thread_cache_csv_filename: thread_cache.csv
 table_cache_headers: Server,Table_open_cache,Open_tables,opened_tables,Hit Rate
 table_definitions_cache_header: Server,table_definition_cache,Opened_table_definitions,Recommendation
 Query_Cache_header: Server,query_cache_type,query_cache_size,Query cache Efficiency,Recommendation

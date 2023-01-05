@@ -2,10 +2,6 @@
 - name: check database threads metrics
   tags: check_threads_metrics
   block:
-  - name: Check I/O capacity
-    command: "mysql -ABNe 'select @@innodb_io_capacity;'"
-    register: io_capacity
-
   - name: Check thread cache size
     command: "mysql -ABNe 'select @@thread_cache_size;'"
     register: thread_cache_size
@@ -21,17 +17,6 @@
   - name: Check Thread cache hit rate
     command: "mysql -ABNe 'select 100 - round((((select variable_value from information_schema.global_status where variable_name=\"threads_created\")/(select variable_value from information_schema.global_status where variable_name=\"Connections\")) * 100),2);'"
     register: Thread_cache_hit_rate
-
-  - name: create report file and write header
-    shell: echo "* Check InnoDB I/O capacity" >> {{ reportdir }}/threads_io_check
-    register: file_written
-    delegate_to: 127.0.0.1
-    run_once: true
-    when: inventory_hostname == ansible_play_hosts_all[0]
-
-  - name: write report to file
-    shell: echo "InnoDB I/O capacity for {{ ansible_hostname }} - {{ io_capacity.stdout }} iops" >> {{ reportdir }}/threads_io_check
-    delegate_to: 127.0.0.1
   
   - name: create report file and write header
     shell: echo "* Check thread_cache size" >> {{ reportdir }}/threads_io_check
@@ -71,6 +56,37 @@
 
   - name: write report to file
     shell: echo "Thread cache Hit Rate for {{ ansible_hostname }} - {{ Thread_cache_hit_rate.stdout }} %" >> {{ reportdir }}/threads_io_check
+    delegate_to: 127.0.0.1
+
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ thread_cache_csv_filename }}"
+      line: "{{ thread_cache_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ thread_cache_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ thread_cache_size.stdout }},{{ threads_created.stdout }},{{ Thread_cache_hit_rate.stdout }},{{ Thread_cache_miss_rate.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ thread_cache_csv_filename }}"
+    register: thread_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: thread_cache.j2
+      dest: threads_cache.html
+      mode: 0777
     delegate_to: 127.0.0.1
 
   - name: echo report directory

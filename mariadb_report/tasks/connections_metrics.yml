@@ -44,3 +44,34 @@
   - name: write report to file
     shell: echo "innodb_metadata_flag for {{ ansible_hostname }} - {{ innodb_metadata_flag.stdout }}" >> {{ reportdir }}/connections_check
     delegate_to: 127.0.0.1
+
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ connections_csv_filename }}"
+      line: "{{ connections_header }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ connections_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ max_connections.stdout }},{{ max_used_connections.stdout }},{{ innodb_metadata_flag.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ connections_csv_filename }}"
+    register: connections_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: connections_template.j2
+      dest: connections.html
+      mode: 0777
+    delegate_to: 127.0.0.1

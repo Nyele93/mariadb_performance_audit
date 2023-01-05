@@ -104,6 +104,37 @@
     delegate_to: 127.0.0.1
     when: innodb_buffer_pool_size
 
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ bufferpool_csv_filename }}"
+      line: "{{ bufferpool_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ bufferpool_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ innodb_buffer_pool_size.stdout }} MB,{{ innodb_buffer_pool_hit_rate.stdout }} %,{{ innodb_buffer_pool_current_usage_percentage.stdout }} %,{{ innodb_buffer_pool_load_status.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ bufferpool_csv_filename }}"
+    register: bufferpool_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: bufferpool_template.j2
+      dest: bufferpool_template.html
+      mode: 0777
+    delegate_to: 127.0.0.1
+
   - name: echo report directory
     debug: msg="report written to file - {{ reportdir }}/bufferpool_check"
 

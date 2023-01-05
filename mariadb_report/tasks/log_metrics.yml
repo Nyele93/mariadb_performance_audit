@@ -3,11 +3,11 @@
   tags: check_db_logs_metrics
   block:
   - name: Check InnoDB log file size
-    command: "mysql -BNe 'select CONVERT(@@innodb_log_file_size /1024/1024, INTEGER);'"
+    command: "mysql -ABNe 'select CONVERT(@@innodb_log_file_size /1024/1024, INTEGER);'"
     register: innodb_log_file_size
 
   - name: Check version (for parameter existence)
-    command: "mysql -BNe 'select @@version;'"
+    command: "mysql -ABNe 'select @@version;'"
     register: version_check
   - name: set version check fact
     set_fact:
@@ -15,13 +15,17 @@
       cacheable: yes
       
   - name: Check log file number
-    command: "mysql -BNe 'select @@innodb_log_files_in_group;'"
+    command: "mysql -ABNe 'select @@innodb_log_files_in_group;'"
     register: log_file_number
     when: ver_check is not match("10.6.*")
 
   - name: Check Innodb Flush method
-    command: "mysql -BNe 'select @@innodb_flush_method;'"
+    command: "mysql -ABNe 'select @@innodb_flush_method;'"
     register: innodb_flush_method
+
+  - name: Check I/O capacity
+    command: "mysql -ABNe 'select @@innodb_io_capacity;'"
+    register: io_capacity
 
   - name: create report file and write header
     shell: echo "* Check InnoDB log file size" >> {{ reportdir }}/logfile_check
@@ -61,6 +65,48 @@
     shell: echo "InnoDB flush method for {{ ansible_hostname }} - {{ innodb_flush_method.stdout }} " >> {{ reportdir }}/logfile_check
     delegate_to: 127.0.0.1
     when: ver_check | length > 0
+
+  - name: create report file and write header
+    shell: echo "* Check InnoDB I/O capacity" >> {{ reportdir }}/threads_io_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "InnoDB I/O capacity for {{ ansible_hostname }} - {{ io_capacity.stdout }} iops" >> {{ reportdir }}/threads_io_check
+    delegate_to: 127.0.0.1	
   
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ additional_bp_csv_filename }}"
+      line: "{{ additional_innodb_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ additional_bp_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ innodb_log_file_size.stdout }} MB,{{ log_file_number.stdout }},{{ innodb_flush_method.stdout }},{{ io_capacity.stdout }} iops"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ additional_bp_csv_filename }}"
+    register: additionalbp_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: additional_bufferpool.j2
+      dest: additional_bufferpool_template.html
+      mode: 0777
+    delegate_to: 127.0.0.1
+
   - name: echo report directory
     debug: msg="report written to file - {{ reportdir }}/logfile_check"
