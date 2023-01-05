@@ -5,7 +5,7 @@ reportdir: /tmp
 mariadb_user: mariadb_usr
 mariadb_pwd: mariadb_pwd
 
-csv_path: /tmp/audit_report_NFI_05-01-23/audit_report_NFI_05-01-23/audit_report_NFI_05-01-23/audit_report_NFI_05-01-23/audit_report_NFI_04-01-23/audit_report_NFI_04-01-23/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23/audit_report_NFI_03-01-23
+csv_path: ./csv_docs
 version_csv_filename: dbversion.csv
 mariadb_version_headers: Server Name,Version,Recommendation
 bufferpool_headers: Server,Innodb_buffer_pool_size,Innodb_Buffer_Pool Hit Rate,Innodb Current Usage,Innodb Load Status
@@ -26,3 +26,5 @@ Temporary_table_headers: Server,tmp_table_size,max_heap_table_size,Efficiency
 temporary_tbl_csv_filename: temp_tbl.csv
 OS_headers: I/O Scheduler,swappiness,Transparent Huge Pages,Mount options
 os_csv_filename: os_checks.csv
+indexes_headers: Server, Duplicate & Redundant Indexes
+indexes_csv_filename: indexes.csv

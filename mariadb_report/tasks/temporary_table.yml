@@ -72,8 +72,8 @@
 
   - name: write HTML file
     template:
-      src: query_cache_template.j2
-      dest: query_cache.html
+      src: temp_tbl_template.j2
+      dest: temp_table.html
       mode: 0777
     delegate_to: 127.0.0.1
 

@@ -19,4 +19,33 @@
   - name: echo report directory
     debug: msg="report written to file - {{ reportdir }}/innodb_index_check"
 
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ indexes_csv_filename }}"
+      line: "{{ indexes_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
 
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ indexes_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ redundant_indexes.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ indexes_csv_filename }}"
+    register: indexes_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: indexes_template.j2
+      dest: indexes_checks.html
+      mode: 0777
+    delegate_to: 127.0.0.1

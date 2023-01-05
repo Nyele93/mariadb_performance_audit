@@ -13,7 +13,6 @@
       echo 
       for s in  /sys/block/*/queue/scheduler; do disk=$(echo $s | cut -d "/" -f 4); echo -n "   $disk- "; cat $s; done
     register: io_scheduler_settings
-    tags: check_io_scheduler_settings
 
   - name: check linux swappiness setting
     shell: | 

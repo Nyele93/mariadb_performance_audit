@@ -105,13 +105,6 @@
     shell: echo "Possibly Fragmented Tables in {{ ansible_hostname }} - {{ Fragmented_Tables.stdout_lines }} " >> {{ reportdir }}/table_metrics_check
     delegate_to: 127.0.0.1
 
-  - name: write HTML file
-    template:
-      src: sample_task_template.j2
-      dest: table.html
-      mode: 0777
-    delegate_to: 127.0.0.1
-
   - name: Save CSV headers
     lineinfile:
       dest: "{{ csv_path }}/{{ table_csv_filename }}"
@@ -155,7 +148,7 @@
   - name: Build out CSV file
     lineinfile:
       dest: "{{ csv_path }}/{{ table_definition_csv_filename }}"
-      line: "{{ inventory_hostname }},{{ check_table_definition_cache.stdout }},{{ open_table_definitions.stdout }},{{ Fragmented_Tables.stdout }}"
+      line: "{{ inventory_hostname }},{{ table_defn_cache.stdout }},{{ open_table_definitions.stdout }},{{ Fragmented_Tables.stdout }}"
       create: true
       state: present
     delegate_to: localhost
