@@ -61,3 +61,34 @@
     shell: echo "Query cache efficiency for {{ ansible_hostname }} - Hits- qcache_hits, Inserts- qcache_inserts, Hit rate- qcache_hit_efficiency" >> {{ reportdir }}/query_cache_check
     delegate_to: 127.0.0.1
     when: qcache_hit_efficiency.stderr | length == 0
+
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ querycache_csv_filename }}"
+      line: "{{ Query_Cache_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ querycache_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ query_cache_enabled.stdout }},{{ query_cache_size.stdout }} MB,{{ qcache_hit_efficiency.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ querycache_csv_filename }}"
+    register: query_cache_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: query_cache_template.j2
+      dest: query_cache.html
+      mode: 0777
+    delegate_to: 127.0.0.1

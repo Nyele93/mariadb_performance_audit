@@ -81,6 +81,37 @@
     run_once: true
     when: inventory_hostname == ansible_play_hosts_all[0]
 
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ os_csv_filename }}"
+      line: "{{ OS_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ os_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ io_scheduler_settings.stdout }},{{ linux_swappiness.stdout }},{{ transparent_huge_pages.stdout }},{{ mount_options.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ os_csv_filename }}"
+    register: osc_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: os_template.j2
+      dest: os_checks.html
+      mode: 0777
+    delegate_to: 127.0.0.1
+
   - name: write report to file
     shell: echo "available memory for {{ ansible_hostname }} - {{ available_installed_mem.stdout }}" >> {{ reportdir }}/OS_metrics_check
     delegate_to: 127.0.0.1

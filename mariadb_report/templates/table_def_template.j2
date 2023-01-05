@@ -1,0 +1,34 @@
+
+
+<h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">Table Definitions Cache & Fragmented Tables</h4>
+<p style="font-family:Arial; font-size: 13px;">
+The number of table definitions that can be stored in the table definition cache. This value (table_definition_cache) helps speed up opening tables. Ideally, an optimized value for this, for a busy system can be set to 2000.
+</p>
+<p style="font-family:Arial; font-size: 13px;">
+The definition cache is responsible for caching tables definitions and instead of going to disk to get it all time it is needed, the MariaDB Server uses it from memory.
+</p>
+<p style="font-family:Arial; font-size: 13px;">
+Table Fragmentation may be caused by a couple of factors, such as - bulk DELETEs, INSERTs with ROLLBACK, etc. For the tables identified as fragmented (having data_free > 10%), defragment table by running an OPTIMIZE TABLE or an ALTER TABLE <tbl_name> ENGINE=<engine_type>;
+</p>
+
+
+<style> .report-table th { background-color: #C0C0C0; color: #000066 }
+ .example-table td:nth-child(1) { color: #000066; font-weight: bold; }
+.example-table td:not(:first-child) { color: #0066FF; }
+</style>
+
+<table class="report-table" style="border: 1px solid black; border-collapse: collapse;">
+<tr>
+    {% for header in table_definitions_cache_headers.split(",") %}
+    <th style="border: 1px solid black; padding: 8px 16px; font-family:Arial; font-size: 13px;">{{ header }}</th>
+    {% endfor %}
+</tr>
+{% for host in table_def_csv_file.list %}
+<tr>
+    {% for header in table_definitions_cache_headers.split(",") %}
+    <td style="border: 1px solid black; padding: 8px 16px; font-family:Arial; font-size: 13px;">{{ host[header] }}</td>
+    {% endfor %}
+</tr>
+{% endfor %}
+</table>
+

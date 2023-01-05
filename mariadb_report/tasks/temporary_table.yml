@@ -3,8 +3,12 @@
   tags: check_temporary_table_metrics
   block:
   - name: check max tmp table size
-    command: "mysql -BNe 'select convert(@@tmp_table_size /1024 /1024, INTEGER);'"
+    command: "mysql -ABNe 'select convert(@@tmp_table_size /1024 /1024, INTEGER);'"
     register: max_tmp_table_size
+
+  - name: check max memory table size
+    command: "mysql -ABNe 'select convert(@@max_heap_table_size /1024 /1024, INTEGER)';"
+    register: max_memory_table_size
 
   - name: check Temporary Table Efficiency
     command: "mysql -ABNe 'select concat(round(((select variable_value from information_schema.global_status where variable_name=\"Created_tmp_disk_tables\")/(select variable_value from information_schema.global_status where variable_name=\"Created_tmp_tables\")),2)*100,\"%\");'"
@@ -28,14 +32,48 @@
     when: inventory_hostname == ansible_play_hosts_all[0]
 
   - name: write report to file
-    shell: echo "Temporary Table efficiency for {{ ansible_hostname }} - {{ temp_table_efiiciency.stdout }}" >> {{ reportdir }}/temp_table_check
+    shell: echo "Temporary Table efficiency for {{ ansible_hostname }} - {{ temp_table_efiiciency.stdout }} %" >> {{ reportdir }}/temp_table_check
     register: file_written
     delegate_to: 127.0.0.1
 
+  - name: create report file and write header
+    shell: echo "* Check max memory table size" >> {{ reportdir }}/table_metrics_check
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "Max memory table size for {{ ansible_hostname }} - {{ max_memory_table_size.stdout }} MB" >> {{ reportdir }}/table_metrics_check
+    delegate_to: 127.0.0.1
+
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ temporary_tbl_csv_filename }}"
+      line: "{{ Temporary_table_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ temporary_tbl_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ max_tmp_table_size.stdout }} MB,{{ max_memory_table_size.stdout }} MB,{{ temp_table_efiiciency.stdout }} %"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ temporary_tbl_csv_filename }}"
+    register: temp_tbl_csv_file 
+    delegate_to: localhost
+    run_once: true
+
   - name: write HTML file
     template:
-      src: ../files/templates/sample_task_template.j2
-      dest: temp_table.html
+      src: query_cache_template.j2
+      dest: query_cache.html
       mode: 0777
     delegate_to: 127.0.0.1
 

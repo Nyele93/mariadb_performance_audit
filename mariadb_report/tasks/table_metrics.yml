@@ -10,6 +10,14 @@
     command: "mysql -ABNe 'select variable_value from information_schema.global_status where variable_name = \"opened_tables\";'"
     register: tables_opened
 
+  - name: Check tables opened
+    command: "mysql -ABNe 'select variable_value from information_schema.global_status where variable_name = \"Open_tables\";'"
+    register: open_tables
+
+  - name: Check tables opened
+    command: "mysql -ABNe 'select round((((select variable_value from information_schema.global_status where variable_name=\"Open_tables\")/(select variable_value from information_schema.global_status where variable_name=\"Opened_tables\"))*100),2);'"
+    register: Hit_Rate
+
   - name: Check table definition cache size
     command: "mysql -ABNe 'select @@table_definition_cache;'"
     register: table_defn_cache
@@ -18,10 +26,6 @@
   - name: check open table definitions
     command: "mysql -ABNe 'select variable_value from information_schema.global_status where variable_name = \"Opened_table_definitions\";'"
     register: open_table_definitions
-    
-  - name: check max memory table size
-    command: "mysql -ABNe 'select convert(@@max_heap_table_size /1024 /1024, INTEGER)';"
-    register: max_memory_table_size
 
   - name: check possibly fragmented Tables
     command: "mysql -ABNe 'SELECT concat(TABLE_SCHEMA,\".\", TABLE_NAME) FROM information_schema.tables WHERE table_schema NOT IN (\"mariadb\", \"information_schema\", \"performance_schema\", \"sys\") AND  DATA_FREE > 0 AND ENGINE = \"InnoDB\" AND round((data_free/(index_length+data_length)),2) > 10;'"
@@ -36,6 +40,28 @@
 
   - name: write report to file
     shell: echo "Table open cache size for {{ ansible_hostname }} - {{ table_open_cache.stdout }} tables" >> {{ reportdir }}/table_metrics_check
+    delegate_to: 127.0.0.1
+
+  - name: create report file and write header
+    shell: echo "* Check Hit Rate" >> {{ reportdir }}/table_metrics_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "Hit Rate for {{ ansible_hostname }} - {{ Hit_Rate.stdout }} tables" >> {{ reportdir }}/table_metrics_check
+    delegate_to: 127.0.0.1
+
+  - name: create report file and write header
+    shell: echo "* Check Open Tables" >> {{ reportdir }}/table_metrics_check
+    register: file_written
+    delegate_to: 127.0.0.1
+    run_once: true
+    when: inventory_hostname == ansible_play_hosts_all[0]
+
+  - name: write report to file
+    shell: echo "Open Tables for {{ ansible_hostname }} - {{ open_tables.stdout }} tables" >> {{ reportdir }}/table_metrics_check
     delegate_to: 127.0.0.1
 
   - name: create report file and write header
@@ -69,16 +95,6 @@
     delegate_to: 127.0.0.1
   
   - name: create report file and write header
-    shell: echo "* Check max memory table size" >> {{ reportdir }}/table_metrics_check
-    delegate_to: 127.0.0.1
-    run_once: true
-    when: inventory_hostname == ansible_play_hosts_all[0]
-
-  - name: write report to file
-    shell: echo "Max memory table size for {{ ansible_hostname }} - {{ max_memory_table_size.stdout }} MB" >> {{ reportdir }}/table_metrics_check
-    delegate_to: 127.0.0.1
-
-  - name: create report file and write header
     shell: echo "* Check Fragmented Table(s) " >> {{ reportdir }}/table_metrics_check
     delegate_to: 127.0.0.1
     run_once: true
@@ -96,13 +112,66 @@
       mode: 0777
     delegate_to: 127.0.0.1
 
-  - blockinfile:
-      marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item }}"
-      path: /usr/local/mariadb_rdba/etc/mariadb_performance_audit/def2.html
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ table_csv_filename }}"
+      line: "{{ table_cache_headers }}"
       create: true
-      block: "{{ lookup('template', item) }}"
-    loop:
-        - sample_task_template.j2
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ table_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ table_open_cache.stdout }},{{ open_tables.stdout }},{{ tables_opened.stdout }},{{ Hit_Rate.stdout }} %"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ table_csv_filename }}"
+    register: table_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: table_cache.j2
+      dest: table_cache.html
+      mode: 0777
+    delegate_to: 127.0.0.1
+
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ table_definition_csv_filename }}"
+      line: "{{ table_definitions_cache_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ table_definition_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ check_table_definition_cache.stdout }},{{ open_table_definitions.stdout }},{{ Fragmented_Tables.stdout }}"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ table_definition_csv_filename }}"
+    register: table_def_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: table_def_template.j2
+      dest: table_def_cache.html
+      mode: 0777
     delegate_to: 127.0.0.1
 
   - name: echo report directory

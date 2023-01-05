@@ -1,3 +1,0 @@
-{% for host in groups['dbservers'] %}
-{{ hostvars[host].ansible_facts.hostname }} {{ open_table_definitions.stdout }}
-{% endfor %}
