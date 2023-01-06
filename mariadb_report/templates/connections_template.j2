@@ -1,4 +1,10 @@
 
+<style>
+  .container { padding:25px; margin:20px; }
+</style>
+
+<div class="container">
+
 <h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">Connections Checks</h4>
 <p style="font-family:Arial; font-size: 13px;">
 The max_used_connections should ideally be lower than the max_connections value, as having it greater than the set value for max_connections could result in the mariadb server hitting the: “Too Many Connections” error.
@@ -26,4 +32,4 @@ Innodb_stats_on_metadata should ideally be set to OFF. If set to ON, Innodb inde
 </tr>
 {% endfor %}
 </table>
-
+</div>

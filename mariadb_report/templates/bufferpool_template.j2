@@ -1,4 +1,10 @@
 
+<style>
+  .container { padding:25px; margin:20px; }
+</style>
+
+<div class="container">
+
 <h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">Innodb Buffer pool</h4>
 <p style="font-family:Arial; font-size: 13px;">
 The InnoDB buffer pool should generally be set to 60-80% of the available RAM when using InnoDB exclusively. Ideally, all InnoDB data and indexes should be able to fit within memory. 
@@ -29,4 +35,4 @@ A high value (>1)  of InnoDB Waits for Checkpoint will suggest an inadequately s
 </tr>
 {% endfor %}
 </table>
-
+</div>

@@ -1,4 +1,11 @@
 
+<style>
+  .container { padding:25px; margin:20px; }
+  .footerhold { text-align:left; padding:3px; }
+   hr { margin-left:5px; margin-right:5px }
+</style>
+
+<div class="container">
 <h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">Additional Innodb Buffer pool Checks</h4>
 <p style="font-family:Arial; font-size: 13px;">
 Innodb_io Capacity (the number of iops used for idle flushing and tasks like applying the change buffer operations in the background) should ideally be set to 2000.  Default of 200 may be too low for workload.
@@ -34,3 +41,9 @@ The innodb_flush_method system variable is used to define how innodb logs and da
 {% endfor %}
 </table>
 
+<footer>
+  <p style="font-family:Arial; font-size: 5px;">
+  All information contained in this report is considered as confidential and owned by the mentioned entities part of this report.
+ </p>
+</footer>
+</div>
