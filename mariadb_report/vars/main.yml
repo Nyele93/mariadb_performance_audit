@@ -6,6 +6,8 @@ mariadb_user: mariadb_usr
 mariadb_pwd: mariadb_pwd
 
 csv_path: ./csv_docs
+summary_headers: Server Name,IP Address,CPU Cores,RAM(GB),Environment
+summary_csv_filename: summary.csv
 version_csv_filename: dbversion.csv
 mariadb_version_headers: Server Name,Version,Recommendation
 bufferpool_headers: Server,Innodb_buffer_pool_size,Innodb_Buffer_Pool Hit Rate,Innodb Current Usage,Innodb Load Status
@@ -24,7 +26,7 @@ Query_Cache_headers: Server,query_cache_type,query_cache_size,Query cache Effici
 querycache_csv_filename: query_cache.csv
 Temporary_table_headers: Server,tmp_table_size,max_heap_table_size,Efficiency
 temporary_tbl_csv_filename: temp_tbl.csv
-OS_headers: I/O Scheduler,swappiness,Transparent Huge Pages,Mount options
+OS_headers: Server,Swappiness,Transparent Huge Pages
 os_csv_filename: os_checks.csv
-indexes_headers: Server, Duplicate & Redundant Indexes
+indexes_headers: Server,Duplicate & Redundant Indexes
 indexes_csv_filename: indexes.csv

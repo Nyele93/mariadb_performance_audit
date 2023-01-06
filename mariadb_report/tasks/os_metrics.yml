@@ -5,7 +5,7 @@
   - name: Check available and installed memory
     shell: |
       echo 
-      echo "$(cat /proc/meminfo | egrep 'MemTotal|MemAvailable' | numfmt --field 2 --from-unit=Ki --to-unit=Gi | sed 's/ kB/G/g' | sort | tr -s ' ' | cut -d '' -f 2)"
+      echo "$(cat /proc/meminfo | egrep 'MemTotal|MemAvailable' | head -2)"
     register: available_installed_mem
 
   - name: check IO scheduler settings
@@ -92,7 +92,7 @@
   - name: Build out CSV file
     lineinfile:
       dest: "{{ csv_path }}/{{ os_csv_filename }}"
-      line: "{{ inventory_hostname }},{{ io_scheduler_settings.stdout }},{{ linux_swappiness.stdout }},{{ transparent_huge_pages.stdout }},{{ mount_options.stdout }}"
+      line: "{{ inventory_hostname }},{{ linux_swappiness.stdout }},{{ transparent_huge_pages.stdout }}"
       create: true
       state: present
     delegate_to: localhost
@@ -110,6 +110,14 @@
       dest: os_checks.html
       mode: 0777
     delegate_to: 127.0.0.1
+
+  - name: write I/O scheduler checks
+    shell: echo "scheduler setting for {{ ansible_hostname }} - {{ io_scheduler_settings.stdout }} " >> os_checks.html
+    delegate_to: 127.0.0.1
+
+  - name: write Mount Point checks
+    shell: echo "scheduler setting for {{ ansible_hostname }} - {{ mount_options.stdout }} " >> os_checks.html
+    delegate_to: 127.0.0.1 
 
   - name: write report to file
     shell: echo "available memory for {{ ansible_hostname }} - {{ available_installed_mem.stdout }}" >> {{ reportdir }}/OS_metrics_check

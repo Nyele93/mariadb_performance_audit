@@ -1,0 +1,34 @@
+
+- name: Prepare Report
+  block:
+  - name: Save CSV headers
+    lineinfile:
+      dest: "{{ csv_path }}/{{ summary_csv_filename }}"
+      line: "{{ summary_headers }}"
+      create: true
+      state: present
+    delegate_to: localhost
+    run_once: true
+
+  - name: Build out CSV file
+    lineinfile:
+      dest: "{{ csv_path }}/{{ summary_csv_filename }}"
+      line: "{{ inventory_hostname }},{{ ansible_default_ipv4.address }},{{ ansible_processor_count }},{{ (ansible_memtotal_mb/1024)|int }}GB (Free - {{ ansible_memfree_mb }}MB) }}, Production"
+      create: true
+      state: present
+    delegate_to: localhost
+
+  - name: Read in CSV to variable
+    community.general.read_csv:
+      path: "{{ csv_path }}/{{ summary_csv_filename }}"
+    register: summary_csv_file 
+    delegate_to: localhost
+    run_once: true
+
+  - name: write HTML file
+    template:
+      src: summary_template.j2
+      dest: summary_report.html
+      mode: 0777
+    delegate_to: 127.0.0.1
+
