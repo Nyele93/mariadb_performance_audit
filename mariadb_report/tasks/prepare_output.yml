@@ -10,18 +10,4 @@
   delegate_to: 127.0.0.1
   run_once: true
 
-- name: prepare appendix template
-  template:
-    src: appendix_template.j2
-    dest: appendix.html
-    mode: 0777  
-  delegate_to: 127.0.0.1
-
-- name: prepare appendix page
-  shell: |
-    echo >> appendix.html
-    cat {{ reportdir }}/audit_report_{{ ansible_date_time.date }} >> appendix.html
-    echo  >> appendix.html
-  delegate_to: 127.0.0.1
-  run_once: true
 
