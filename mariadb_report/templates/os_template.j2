@@ -17,7 +17,7 @@ A low swappiness setting is recommended for database workloads. For MariaDB data
 For more information on MariaDB and swappiness:
 </p>
 <a style="text-decoration:none; color: #0066FF;" ref="https://mariadb.com/kb/en/mariadb/configuring-swappiness/">https://mariadb.com/kb/en/mariadb/configuring-swappiness/</a>
-https://mariadb.com/kb/en/mariadb/configuring-swappiness/
+
 <p style="font-family:Arial; font-size: 13px;">
 To further improve the performance on Linux, append the kernel parameter “elevator=noop” to disable the I/O scheduler (if the I/O scheduler is set to any other value asides ‘none’). This will help reduce latency on small-block requests to SSD disks. This will also greatly improve the performance of an environment which has concurrent and mixed reads and writes to the filesystem.
 </p>

@@ -58,7 +58,7 @@
   - name: Build out CSV file
     lineinfile:
       dest: "{{ csv_path }}/{{ temporary_tbl_csv_filename }}"
-      line: "{{ inventory_hostname }},{{ max_tmp_table_size.stdout }} MB,{{ max_memory_table_size.stdout }} MB,{{ temp_table_efiiciency.stdout }} %"
+      line: "{{ inventory_hostname }},{{ max_tmp_table_size.stdout }} MB,{{ max_memory_table_size.stdout }} MB,{{ temp_table_efiiciency.stdout }} "
       create: true
       state: present
     delegate_to: localhost

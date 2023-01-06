@@ -13,7 +13,7 @@
   - name: Build out CSV file
     lineinfile:
       dest: "{{ csv_path }}/{{ summary_csv_filename }}"
-      line: "{{ inventory_hostname }},{{ ansible_default_ipv4.address }},{{ ansible_processor_count }},{{ (ansible_memtotal_mb/1024)|int }}GB (Free - {{ ansible_memfree_mb }}MB) }}, Production"
+      line: "{{ inventory_hostname }},{{ ansible_default_ipv4.address }},{{ ansible_processor_count }},{{ (ansible_memtotal_mb/1024)|int }}GB (Free - {{ ansible_memfree_mb }}MB), Production"
       create: true
       state: present
     delegate_to: localhost

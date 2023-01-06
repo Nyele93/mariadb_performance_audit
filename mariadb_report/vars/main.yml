@@ -18,7 +18,7 @@ connections_header: Server,max_connections,max_used_connections,Innodb_Stats_on_
 connections_csv_filename: connections.csv
 thread_cache_headers: Server,thread_cache_size,threads_created,Thread_cache_hit_rate,Thread_cache_miss_rate
 thread_cache_csv_filename: thread_cache.csv
-table_cache_headers: Server,Table_open_cache,Open_tables,opened_tables,Hit Rate
+table_cache_headers: Server,Table_open_cache,Open_tables,tables_opened,Hit Rate
 table_csv_filename: table_cache.csv
 table_definitions_cache_headers: Server,table_definition_cache,Opened_table_definitions,Fragmented Tables
 table_definition_csv_filename: table_def.csv
@@ -26,7 +26,7 @@ Query_Cache_headers: Server,query_cache_type,query_cache_size,Query cache Effici
 querycache_csv_filename: query_cache.csv
 Temporary_table_headers: Server,tmp_table_size,max_heap_table_size,Efficiency
 temporary_tbl_csv_filename: temp_tbl.csv
-OS_headers: Server,Swappiness,Transparent Huge Pages
+OS_headers: Server,Swappiness,Transparent Huge Pages,Scheduler Settings,Mount Options
 os_csv_filename: os_checks.csv
 indexes_headers: Server,Duplicate & Redundant Indexes
 indexes_csv_filename: indexes.csv

@@ -19,11 +19,8 @@
 
 - name: prepare appendix page
   shell: |
-    echo 
-    echo "--- Performance audit start ---"  >> appendix.html
-    echo  >> appendix.html
-    for f in {{ reportdir }}/*check; do (cat "${f}"; echo) >> appendix.html; done
-    echo "--- Performance audit end ---"  >> appendix.html
+    echo >> appendix.html
+    cat {{ reportdir }}/audit_report_{{ ansible_date_time.date }} >> appendix.html
     echo  >> appendix.html
   delegate_to: 127.0.0.1
   run_once: true
