@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+ .container {
+  background-image: url('frontpage.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;  
+  background-size: cover;
+  height: 850px;
+  }
+
+ .ctr {
+     padding-top: 150px;
+  }
+ 
+ .caption1 {
+    font-size: 30px;
+    font-weight: bold;
+    font-family: sans-serif;
+    color: white;
+    line-height: 1px;
+  }
+
+ .caption2 { 
+    font-size: 45px;
+    font-weight: bold;
+    font-family: sans-serif;
+    color: white;
+  }
+
+ .customer {
+      font-size: 35px;
+      font-weight: 50px;
+    font-family: sans-serif;
+    color: #172B4D;
+ }
+ 
+ .cust_note { 
+   margin-top: 180px;
+ }
+
+ .div-img {
+   width: 100px; 
+   height: 100px; 
+   position: absolute; 
+   z-index: 4; 
+   bottom: 20px; 
+   right: 50px;
+ }
+
+ .report-date{ 
+  position: absolute;
+  bottom: 70px;
+  left: 50px;
+ }
+</style>
+</head>
+<body>
+<div class="container">
+<center>
+ <div class="ctr">
+  <p class="caption1">MariaDB RDBA Report</p>
+  <p class="caption2">Performance & Security Audit</p>
+</div> 
+
+ <div class="cust_note">
+ <p style="color:white; line-height: 1px; font-size: 20px;">Prepared for: </p>
+ <p class="customer">{{ customer_name }} </p>
+ </div>  
+
+</center>
+</div>
+ 
+<div class="report-date">
+  <p style="color: white;">Report Delivered On: {{ report_date }} </p>
+</div>
+
+<div class="div-img">
+  <img style="width: 100px; height: 100px; position: absolute; z-index: 4; bottom: 50px; right: 30px;" src="Logo_header.png"/>
+</div>
+
+</body>
+</html>
+

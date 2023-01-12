@@ -1,30 +1,30 @@
 
 <style>
-  .container { padding:25px; margin:20px; }
+  .container { padding-left:40px; padding-right:40px; padding-top: 5px; padding-bottom:5px; margin:3px; }
 </style>
 
 <div class="container">
 
 <h4 style="color:#72A0C1; font-family:verdana; font-size: 15px; font-weight: 200;">OS Configuration</h4>
-<p style="font-family:Arial; font-size: 13px;">
+<p style="font-family:Arial; font-size: 18px;">
  Disk Info
 </p>
-<p style="font-family:Arial; font-size: 13px;">
+<p style="font-family:Arial; font-size: 15px;">
 Ext4 and xfs are the recommended choices, with xfs being preferred as it is known to be superior with DirectIO and SSD disks. For ext4 disks it is important to have the flag noatime set, to prevent extra unnecessary IO. The recommended I/O scheduler is noop or deadline (mq-deadline is the multi-queue version of the regular deadline). 
 </p>
-<p style="font-family:Arial; font-size: 13px;">
+<p style="font-family:Arial; font-size: 15px;">
 It is also recommended, if possible, to separate binlogs and innodb log files onto a separate volume/mount point to enable IO separation of write-intensive files, if needed. 
 </p>
-<p style="font-family:Arial; font-size: 13px;">
+<p style="font-family:Arial; font-size: 15px;">
 It is not recommended to set swappiness = 0 (more aggressive) as this would avoid swapping out, however, this will increase the likelihood of OOM killing under strong memory and I/O pressure. 
 A low swappiness setting is recommended for database workloads. For MariaDB databases, it is recommended to set swappiness to a value of 1.
 </p>
-<p style="font-family:Arial; font-size: 13px;">
+<p style="font-family:Arial; font-size: 15px;">
 For more information on MariaDB and swappiness:
 </p>
-<a style="text-decoration:none; color: #0066FF;" ref="https://mariadb.com/kb/en/mariadb/configuring-swappiness/">https://mariadb.com/kb/en/mariadb/configuring-swappiness/</a>
+<a style="color: #0066FF;" ref="https://mariadb.com/kb/en/mariadb/configuring-swappiness/">https://mariadb.com/kb/en/mariadb/configuring-swappiness/</a>
 
-<p style="font-family:Arial; font-size: 13px;">
+<p style="font-family:Arial; font-size: 15px;">
 To further improve the performance on Linux, append the kernel parameter “elevator=noop” to disable the I/O scheduler (if the I/O scheduler is set to any other value asides ‘none’). This will help reduce latency on small-block requests to SSD disks. This will also greatly improve the performance of an environment which has concurrent and mixed reads and writes to the filesystem.
 </p>
 

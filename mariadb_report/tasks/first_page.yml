@@ -1,0 +1,15 @@
+---
+- name: prepare first page
+  tags: prepare_first_page
+  block:
+  - set_fact:
+      report_date: "{{ ansible_date_time.date }}"
+      cacheable: yes
+
+  - name: Generate First Page
+    template: 
+      src: first_page.j2
+      dest: first_page.html
+      mode: 0777
+    delegate_to: 127.0.0.1
+ 

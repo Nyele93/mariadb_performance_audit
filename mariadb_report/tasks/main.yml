@@ -1,6 +1,7 @@
 ---
 #tasks generating performance report.
 
+- include: first_page.yml
 - include: summary.yml
 - include: check_dbVersion.yml
 - include: bufferpool_metrics.yml

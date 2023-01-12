@@ -52,8 +52,8 @@ rdba_user=${mdb_user-$default_user}
 sed -i '1,3!d' mariadb_report/files/local_hosts_file
 #get username from connect.config file
 default_connect_file=/usr/local/mariadb_rdba/etc/connect.config
-read -ep "enter file name in fullpath [$default_connect_file]: " conn_file
-connect_file=${conn_file-$default_connect_file}
+read -ep "enter file name in fullpath [$default_connect_file]: " connect_file
+#connect_file=${conn_file-$default_connect_file}
 
 user=$(fgrep User $connect_file 2>/dev/null| grep -v "^#" | sed -e "s/Username//g" | tr -d " \t" | head -1)
 read_pwd=$(fgrep pass connect.config 2>/dev/null| grep -v "^#" | sed -e "s/password//g" | tr -d " \t" | head -1)
@@ -112,8 +112,12 @@ declare hosts=$3
 . deploy.conf
 
 default_customer=$customer_name
-read -ep "Enter Customer Name [$default_customer]: " cust_name
+read -ep "Enter Customer Name [$default_customer]: " name
 cust_name=${name-$default_customer}
+
+#replace customer_name in vars main.yml file
+sed -i "s/set_cust_name/$cust_name/g" ./mariadb_report/vars/main.yml
+#handle exception for when already set.
 
 #set credentials in vars of role if first run
 #ToDO: implement cache
@@ -397,6 +401,7 @@ while test $# -gt 0; do
       echo "-h, --help                show brief help"
       echo "-t=ACTION, --tag=ACTION   specify specific task to execute in plabook, using the attached tag."
       echo "-st, --show-tags          show all available tags in playbook."
+      echo "-sh, --show-hosts         show all the ansible hosts captured in the local_hosts_file."
       echo "--prepare-local           This will prepare a local host file (to be used by the playbook) from the hosts list in connect.config"
       echo "-a, --all                 execute all tasks in the playbook."
       usage
