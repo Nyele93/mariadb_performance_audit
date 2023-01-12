@@ -1,0 +1,26 @@
+---
+- name: create final report
+  tags: create_final_report
+  block:
+  - name: create final report  
+    shell: |
+       cat summary_report.html >> Final_Report.html
+       cat mariadb_version_check.html >> Final_Report.html
+       cat bufferpool_template.html >> Final_Report.html
+       cat additional_bufferpool_template.html >> Final_Report.html
+       cat connections.html >> Final_Report.html
+       cat threads_cache.html >> Final_Report.html
+       cat table_cache.html >> Final_Report.html
+       cat table_def_cache.html >> Final_Report.html
+       cat query_cache.html >> Final_Report.html
+       cat temp_table.html >> Final_Report.html
+       cat indexes_checks.html >> Final_Report.html
+       cat os_checks.html >> Final_Report.html
+    delegate_to: 127.0.0.1
+    run_once: true
+  
+  - name: create final report
+    shell: echo "Audit Report written to - Final_Report.html"
+    delegate_to: 127.0.0.1
+    run_once: true
+

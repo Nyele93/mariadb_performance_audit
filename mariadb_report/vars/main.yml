@@ -4,7 +4,7 @@
 reportdir: /tmp
 mariadb_user: mariadb_usr
 mariadb_pwd: mariadb_pwd
-customer_name: set_cust_name
+customer_name:  
 
 csv_path: ./csv_docs
 summary_headers: Server Name,IP Address,CPU Cores,RAM(GB),Environment

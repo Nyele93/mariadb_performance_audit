@@ -1,5 +1,3 @@
 #do not delete. 
 # 
 [dbservers]
-nfiv-mdb-01p ansible_ssh_host=nfiv-mdb-01p ansible_connection=ssh ansible_user=mariadb
-nfiv-mdb-02p ansible_ssh_host=nfiv-mdb-02p ansible_connection=ssh ansible_user=mariadb
